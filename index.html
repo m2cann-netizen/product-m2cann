@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>로또 번호 추천기</title>
+<title>Lotto Number Generator</title>
 
 <style>
 body{
@@ -69,22 +69,36 @@ button:hover{
 
 .set{
     margin-top:25px;
-    padding:15px;
+    padding:22px 15px;
     border:1px solid #ddd;
     border-radius:10px;
+    min-height:82px;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    flex-wrap:wrap;
+    gap:8px;
 }
 
 .ball{
     display:inline-flex;
-    width:45px;
-    height:45px;
+    width:62px;
+    height:62px;
     border-radius:50%;
     background:#ffcc00;
     justify-content:center;
     align-items:center;
     margin:3px;
     font-weight:bold;
-    font-size:18px;
+    font-size:24px;
+    opacity:0;
+    transform:scale(0.8);
+}
+
+.ball.show{
+    opacity:1;
+    transform:scale(1);
+    animation:shake 0.28s ease-in-out;
 }
 
 .bonus{
@@ -93,8 +107,25 @@ button:hover{
 }
 
 .plus{
-    font-size:24px;
+    display:inline-flex;
+    align-items:center;
+    min-height:62px;
+    font-size:32px;
     margin:0 8px;
+    opacity:0;
+}
+
+.plus.show{
+    opacity:1;
+}
+
+@keyframes shake{
+    0%{ transform:translateX(0) scale(1); }
+    18%{ transform:translateX(-4px) scale(1.04); }
+    36%{ transform:translateX(4px) scale(1.04); }
+    54%{ transform:translateX(-3px) scale(1.02); }
+    72%{ transform:translateX(3px) scale(1.01); }
+    100%{ transform:translateX(0) scale(1); }
 }
 
 body.dark{
@@ -116,15 +147,15 @@ body.dark .set{
 <body>
 
 <div class="container">
-    <button class="theme-toggle" id="themeButton" onclick="toggleTheme()">블랙</button>
+    <button class="theme-toggle" id="themeButton" onclick="toggleTheme()">Black</button>
 
     <div class="header-container">
         <img src="https://img.icons8.com/color/96/lottery-ticket.png" alt="Lotto Ticket" class="lotto-icon">
-        <h1>로또 번호 추천기</h1>
+        <h1>Lotto Number Generator</h1>
     </div>
 
     <div class="actions">
-        <button onclick="generateLottoSet()">번호 추천받기</button>
+        <button onclick="generateLottoSet()">Generate Numbers</button>
     </div>
 
     <div id="result"></div>
@@ -150,31 +181,94 @@ function createSet() {
     return {main, bonus};
 }
 
-function generateLottoSet(){
+let audioContext;
+let animationTimers = [];
+
+function playShakeSound(){
+    let AudioContextClass = window.AudioContext || window.webkitAudioContext;
+
+    if(!AudioContextClass){
+        return;
+    }
+
+    audioContext = audioContext || new AudioContextClass();
+
+    if(audioContext.state === "suspended"){
+        audioContext.resume();
+    }
+
+    let oscillator = audioContext.createOscillator();
+    let gain = audioContext.createGain();
+    let now = audioContext.currentTime;
+
+    oscillator.type = "square";
+    oscillator.frequency.setValueAtTime(90, now);
+    oscillator.frequency.linearRampToValueAtTime(140, now + 0.06);
+    oscillator.frequency.linearRampToValueAtTime(75, now + 0.12);
+
+    gain.gain.setValueAtTime(0.0001, now);
+    gain.gain.exponentialRampToValueAtTime(0.08, now + 0.01);
+    gain.gain.exponentialRampToValueAtTime(0.0001, now + 0.14);
+
+    oscillator.connect(gain);
+    gain.connect(audioContext.destination);
+    oscillator.start(now);
+    oscillator.stop(now + 0.15);
+}
+
+function clearAnimationTimers(){
+    animationTimers.forEach(timer=>clearTimeout(timer));
+    animationTimers = [];
+}
+
+function revealElement(element, delay, shouldPlaySound = true){
+    let timer = setTimeout(()=>{
+        element.classList.add("show");
+
+        if(shouldPlaySound){
+            playShakeSound();
+        }
+    }, delay);
+
+    animationTimers.push(timer);
+}
+
+function generateLottoSet(shouldPlaySound = true){
 
     let result = document.getElementById("result");
     let set = createSet();
+    clearAnimationTimers();
 
-    let html = `<div class="set">
-                    <h3>추천 번호</h3>`;
+    result.innerHTML = `<div class="set" id="numberSet"></div>`;
+    let numberSet = document.getElementById("numberSet");
 
-    set.main.forEach(num=>{
-        html += `<span class="ball">${num}</span>`;
+    set.main.forEach((num, index)=>{
+        let ball = document.createElement("span");
+        ball.className = "ball";
+        ball.textContent = num;
+        numberSet.appendChild(ball);
+        revealElement(ball, index * 500, shouldPlaySound);
     });
 
-    html += `<span class="plus">+</span>`;
-    html += `<span class="ball bonus">${set.bonus}</span>`;
-    html += `</div>`;
+    let plus = document.createElement("span");
+    plus.className = "plus";
+    plus.textContent = "+";
+    numberSet.appendChild(plus);
+    revealElement(plus, set.main.length * 500, false);
 
-    result.innerHTML = html;
+    let bonusBall = document.createElement("span");
+    bonusBall.className = "ball bonus";
+    bonusBall.textContent = set.bonus;
+    numberSet.appendChild(bonusBall);
+    revealElement(bonusBall, (set.main.length + 1) * 500, shouldPlaySound);
 }
 
 function toggleTheme(){
     let isDark = document.body.classList.toggle("dark");
-    document.getElementById("themeButton").textContent = isDark ? "화이트" : "블랙";
+    document.getElementById("themeButton").textContent = isDark ? "White" : "Black";
 }
 
-generateLottoSet();
+generateLottoSet(false);
 
 </script>
 
