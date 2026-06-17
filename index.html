@@ -1,0 +1,182 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>로또 번호 추천기</title>
+
+<style>
+body{
+    font-family: Arial, sans-serif;
+    background:#f4f6f8;
+    color:#222;
+    text-align:center;
+    padding:40px;
+}
+
+.container{
+    position:relative;
+    max-width:800px;
+    margin:auto;
+    background:white;
+    padding:30px;
+    border-radius:15px;
+    box-shadow:0 5px 15px rgba(0,0,0,0.1);
+}
+
+.header-container {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 15px;
+    margin-bottom: 20px;
+}
+
+.lotto-icon {
+    width: 40px;
+    height: 40px;
+}
+
+.actions{
+    display:flex;
+    justify-content:center;
+}
+
+button{
+    padding:15px 30px;
+    font-size:18px;
+    border:none;
+    border-radius:10px;
+    background:#1f3a2e;
+    color:white;
+    cursor:pointer;
+}
+
+.theme-toggle{
+    position:absolute;
+    top:15px;
+    right:15px;
+    width:90px;
+    height:42px;
+    padding:8px 14px;
+    font-size:14px;
+    border-radius:8px;
+}
+
+button:hover{
+    background:#2d5744;
+}
+
+.set{
+    margin-top:25px;
+    padding:15px;
+    border:1px solid #ddd;
+    border-radius:10px;
+}
+
+.ball{
+    display:inline-flex;
+    width:45px;
+    height:45px;
+    border-radius:50%;
+    background:#ffcc00;
+    justify-content:center;
+    align-items:center;
+    margin:3px;
+    font-weight:bold;
+    font-size:18px;
+}
+
+.bonus{
+    background:#4caf50;
+    color:white;
+}
+
+.plus{
+    font-size:24px;
+    margin:0 8px;
+}
+
+body.dark{
+    background:#111;
+    color:white;
+}
+
+body.dark .container{
+    background:#222;
+    box-shadow:0 5px 15px rgba(255,255,255,0.08);
+}
+
+body.dark .set{
+    border-color:#444;
+}
+</style>
+</head>
+
+<body>
+
+<div class="container">
+    <button class="theme-toggle" id="themeButton" onclick="toggleTheme()">블랙</button>
+
+    <div class="header-container">
+        <img src="https://img.icons8.com/color/96/lottery-ticket.png" alt="Lotto Ticket" class="lotto-icon">
+        <h1>로또 번호 추천기</h1>
+    </div>
+
+    <div class="actions">
+        <button onclick="generateLottoSet()">번호 추천받기</button>
+    </div>
+
+    <div id="result"></div>
+</div>
+
+<script>
+
+function createSet() {
+
+    let nums = [];
+
+    while(nums.length < 7){
+        let n = Math.floor(Math.random()*45)+1;
+
+        if(!nums.includes(n)){
+            nums.push(n);
+        }
+    }
+
+    let main = nums.slice(0,6).sort((a,b)=>a-b);
+    let bonus = nums[6];
+
+    return {main, bonus};
+}
+
+function generateLottoSet(){
+
+    let result = document.getElementById("result");
+    let set = createSet();
+
+    let html = `<div class="set">
+                    <h3>추천 번호</h3>`;
+
+    set.main.forEach(num=>{
+        html += `<span class="ball">${num}</span>`;
+    });
+
+    html += `<span class="plus">+</span>`;
+    html += `<span class="ball bonus">${set.bonus}</span>`;
+    html += `</div>`;
+
+    result.innerHTML = html;
+}
+
+function toggleTheme(){
+    let isDark = document.body.classList.toggle("dark");
+    document.getElementById("themeButton").textContent = isDark ? "화이트" : "블랙";
+}
+
+generateLottoSet();
+
+</script>
+
+</body>
+</html>
