@@ -101,19 +101,6 @@ button:hover{
     color:white;
 }
 
-.plus{
-    display:inline-flex;
-    align-items:center;
-    min-height:62px;
-    font-size:32px;
-    margin:0 8px;
-    opacity:0;
-}
-
-.plus.show{
-    opacity:1;
-}
-
 @keyframes shake{
     0%{ transform:translateX(0) scale(1); }
     18%{ transform:translateX(-4px) scale(1.04); }
@@ -244,17 +231,11 @@ function generateLottoSet(shouldPlaySound = true){
         revealElement(ball, index * 500, shouldPlaySound);
     });
 
-    let plus = document.createElement("span");
-    plus.className = "plus";
-    plus.textContent = "+";
-    numberSet.appendChild(plus);
-    revealElement(plus, set.main.length * 500, false);
-
     let bonusBall = document.createElement("span");
     bonusBall.className = "ball bonus";
     bonusBall.textContent = set.bonus;
     numberSet.appendChild(bonusBall);
-    revealElement(bonusBall, (set.main.length + 1) * 500, shouldPlaySound);
+    revealElement(bonusBall, set.main.length * 500, shouldPlaySound);
 }
 
 function toggleTheme(){
