@@ -201,17 +201,27 @@ function createSet() {
 let audioContext;
 let animationTimers = [];
 
-function playShakeSound(){
+function prepareAudio(){
     let AudioContextClass = window.AudioContext || window.webkitAudioContext;
 
     if(!AudioContextClass){
-        return;
+        return null;
     }
 
     audioContext = audioContext || new AudioContextClass();
 
     if(audioContext.state === "suspended"){
         audioContext.resume();
+    }
+
+    return audioContext;
+}
+
+function playShakeSound(){
+    let context = prepareAudio();
+
+    if(!context){
+        return;
     }
 
     let oscillator = audioContext.createOscillator();
@@ -233,17 +243,44 @@ function playShakeSound(){
     oscillator.stop(now + 0.15);
 }
 
+function playBonusSound(){
+    let context = prepareAudio();
+
+    if(!context){
+        return;
+    }
+
+    let oscillator = context.createOscillator();
+    let gain = context.createGain();
+    let now = context.currentTime;
+
+    oscillator.type = "sine";
+    oscillator.frequency.setValueAtTime(520, now);
+    oscillator.frequency.exponentialRampToValueAtTime(980, now + 0.22);
+    oscillator.frequency.exponentialRampToValueAtTime(760, now + 0.45);
+
+    gain.gain.setValueAtTime(0.0001, now);
+    gain.gain.exponentialRampToValueAtTime(0.12, now + 0.04);
+    gain.gain.setValueAtTime(0.12, now + 0.24);
+    gain.gain.exponentialRampToValueAtTime(0.0001, now + 0.48);
+
+    oscillator.connect(gain);
+    gain.connect(context.destination);
+    oscillator.start(now);
+    oscillator.stop(now + 0.5);
+}
+
 function clearAnimationTimers(){
     animationTimers.forEach(timer=>clearTimeout(timer));
     animationTimers = [];
 }
 
-function revealElement(element, delay, shouldPlaySound = true){
+function revealElement(element, delay, shouldPlaySound = true, soundPlayer = playShakeSound){
     let timer = setTimeout(()=>{
         element.classList.add("show");
 
         if(shouldPlaySound){
-            playShakeSound();
+            soundPlayer();
         }
     }, delay);
 
@@ -255,6 +292,10 @@ function generateLottoSet(shouldPlaySound = true){
     let result = document.getElementById("result");
     let set = createSet();
     clearAnimationTimers();
+
+    if(shouldPlaySound){
+        prepareAudio();
+    }
 
     result.innerHTML = `<div class="set" id="numberSet"></div>`;
     let numberSet = document.getElementById("numberSet");
@@ -271,7 +312,8 @@ function generateLottoSet(shouldPlaySound = true){
     bonusBall.className = "ball bonus";
     bonusBall.textContent = set.bonus;
     numberSet.appendChild(bonusBall);
-    revealElement(bonusBall, set.main.length * 500, shouldPlaySound);
+    let bonusDelay = (set.main.length - 1) * 500 + 1000;
+    revealElement(bonusBall, bonusDelay, shouldPlaySound, playBonusSound);
 }
 
 function toggleTheme(){
