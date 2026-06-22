@@ -6,16 +6,22 @@
 <title>Lotto Number Generator</title>
 
 <style>
+*{
+    box-sizing:border-box;
+}
+
 body{
     font-family: Arial, sans-serif;
     background:#f4f6f8;
     color:#222;
     text-align:center;
     padding:40px;
+    overflow-x:hidden;
 }
 
 .container{
     position:relative;
+    width:min(800px, 100%);
     max-width:800px;
     margin:auto;
     background:white;
@@ -26,10 +32,62 @@ body{
 
 .header-container {
     display: flex;
+    flex-direction:column;
     align-items: center;
     justify-content: center;
     gap: 15px;
     margin-bottom: 20px;
+}
+
+.header-container h1{
+    margin:0;
+    max-width:100%;
+}
+
+.local-lotteries{
+    display:flex;
+    width:100%;
+    min-width:0;
+    align-items:center;
+    flex-direction:column;
+    justify-content:center;
+    gap:6px;
+    min-height:31px;
+}
+
+.lottery-item{
+    display:inline-flex;
+    align-items:center;
+    gap:7px;
+    padding:5px 10px 5px 6px;
+    color:#4c5561;
+    background:#f5f7f8;
+    border:1px solid #e3e7ea;
+    border-radius:999px;
+    font-size:13px;
+    font-weight:600;
+}
+
+.lottery-icon{
+    display:inline-flex;
+    width:21px;
+    height:21px;
+    align-items:center;
+    justify-content:center;
+    color:#fff;
+    background:linear-gradient(145deg, #ffcf33, #f29b13);
+    border-radius:50%;
+    box-shadow:inset -2px -2px 4px rgba(0,0,0,0.12);
+    font-size:9px;
+    font-weight:bold;
+}
+
+.lottery-item:nth-child(2) .lottery-icon{
+    background:linear-gradient(145deg, #58a8f5, #286ac4);
+}
+
+.lottery-item:nth-child(3) .lottery-icon{
+    background:linear-gradient(145deg, #72c879, #30904a);
 }
 
 .actions{
@@ -57,15 +115,41 @@ button,
     text-decoration:none;
 }
 
-.theme-toggle{
+.country-display{
     position:absolute;
     top:15px;
     right:15px;
-    width:90px;
-    height:42px;
-    padding:8px 14px;
-    font-size:14px;
-    border-radius:8px;
+    display:flex;
+    width:100px;
+    align-items:center;
+    flex-direction:column;
+    gap:4px;
+}
+
+.flag-circle{
+    display:flex;
+    width:36px;
+    height:36px;
+    align-items:center;
+    justify-content:center;
+    overflow:hidden;
+    background:#eef1f3;
+    border:1px solid #d8dde1;
+    border-radius:50%;
+    font-size:24px;
+    line-height:1;
+    box-shadow:0 2px 5px rgba(0,0,0,0.08);
+}
+
+.country-name{
+    max-width:100px;
+    overflow:hidden;
+    color:#56606d;
+    font-size:10px;
+    font-weight:bold;
+    line-height:1.15;
+    text-overflow:ellipsis;
+    white-space:nowrap;
 }
 
 button:hover,
@@ -121,20 +205,6 @@ button:hover,
     100%{ transform:translateX(0) scale(1); }
 }
 
-body.dark{
-    background:#111;
-    color:white;
-}
-
-body.dark .container{
-    background:#222;
-    box-shadow:0 5px 15px rgba(255,255,255,0.08);
-}
-
-body.dark .set{
-    border-color:#444;
-}
-
 @media (max-width: 600px){
     body{
         padding:20px 12px;
@@ -142,6 +212,7 @@ body.dark .set{
 
     .container{
         padding:82px 18px 24px;
+        overflow:hidden;
     }
 
     .header-container{
@@ -149,7 +220,22 @@ body.dark .set{
     }
 
     .header-container h1{
-        font-size:28px;
+        font-size:22px;
+        line-height:1.2;
+    }
+
+    .country-display{
+        right:10px;
+        width:82px;
+    }
+
+    .country-name{
+        max-width:82px;
+    }
+
+    .lottery-item{
+        max-width:100%;
+        font-size:12px;
     }
 
     .ball{
@@ -165,10 +251,14 @@ body.dark .set{
 
 <div class="container">
     <a class="partnership-link" href="partnership.html">제휴문의</a>
-    <button class="theme-toggle" id="themeButton" onclick="toggleTheme()">Black</button>
+    <div class="country-display" aria-live="polite">
+        <span class="flag-circle" id="countryFlag" aria-hidden="true">🌐</span>
+        <span class="country-name" id="countryName">Detecting...</span>
+    </div>
 
     <div class="header-container">
         <h1>Lotto Number Generator</h1>
+        <div class="local-lotteries" id="localLotteries" aria-label="Major local lotteries"></div>
     </div>
 
     <div class="actions">
@@ -200,6 +290,96 @@ function createSet() {
 
 let audioContext;
 let animationTimers = [];
+
+const lotteryCatalog = {
+    KR: ["Lotto 6/45", "Pension Lottery 720+", "Speetto 2000"],
+    US: ["Powerball", "Mega Millions"],
+    GB: ["Lotto", "EuroMillions", "Set For Life"],
+    CA: ["Lotto Max", "Lotto 6/49", "Daily Grand"],
+    AU: ["Powerball", "Oz Lotto", "Saturday Lotto"],
+    JP: ["Loto 7", "Loto 6", "Mini Loto"],
+    DE: ["LOTTO 6aus49", "Eurojackpot", "GlücksSpirale"],
+    FR: ["Loto", "EuroMillions - My Million", "EuroDreams"],
+    ES: ["La Primitiva", "Euromillones", "Bonoloto"],
+    IT: ["SuperEnalotto", "Eurojackpot", "Lotto"],
+    IE: ["Lotto", "EuroMillions", "Daily Million"],
+    NZ: ["Lotto", "Powerball", "Strike"]
+};
+
+function countryCodeToFlag(countryCode){
+    if(!/^[A-Z]{2}$/.test(countryCode)){
+        return "🌐";
+    }
+
+    return [...countryCode]
+        .map(character=>String.fromCodePoint(127397 + character.charCodeAt()))
+        .join("");
+}
+
+function getCountryEnglishName(countryCode, fallbackName = ""){
+    try{
+        let names = new Intl.DisplayNames(["en"], {type:"region"});
+        return names.of(countryCode) || fallbackName || countryCode;
+    }catch(error){
+        return fallbackName || countryCode;
+    }
+}
+
+function getLocaleCountryCode(){
+    let locale = navigator.language || "";
+    let match = locale.match(/[-_]([A-Za-z]{2})$/);
+    return match ? match[1].toUpperCase() : "KR";
+}
+
+function renderCountry(countryCode, suppliedName = ""){
+    let code = /^[A-Z]{2}$/.test(countryCode) ? countryCode : getLocaleCountryCode();
+    let countryName = getCountryEnglishName(code, suppliedName);
+    let lotteries = (lotteryCatalog[code] || []).slice(0, 3);
+
+    document.getElementById("countryFlag").textContent = countryCodeToFlag(code);
+    document.getElementById("countryName").textContent = countryName;
+
+    let lotteryContainer = document.getElementById("localLotteries");
+    lotteryContainer.innerHTML = "";
+
+    lotteries.forEach((lottery, index)=>{
+        let item = document.createElement("span");
+        item.className = "lottery-item";
+
+        let icon = document.createElement("span");
+        icon.className = "lottery-icon";
+        icon.setAttribute("aria-hidden", "true");
+        icon.textContent = index + 1;
+
+        let name = document.createElement("span");
+        name.textContent = lottery;
+
+        item.append(icon, name);
+        lotteryContainer.appendChild(item);
+    });
+}
+
+async function detectVisitorCountry(){
+    let fallbackCode = getLocaleCountryCode();
+    let controller = new AbortController();
+    let timeout = setTimeout(()=>controller.abort(), 3500);
+
+    try{
+        let response = await fetch("https://ipwho.is/", {signal:controller.signal});
+        let location = await response.json();
+
+        if(response.ok && location.success !== false && location.country_code){
+            renderCountry(location.country_code.toUpperCase(), location.country);
+            return;
+        }
+    }catch(error){
+        // Browser locale is used when IP-based detection is unavailable.
+    }finally{
+        clearTimeout(timeout);
+    }
+
+    renderCountry(fallbackCode);
+}
 
 function prepareAudio(){
     let AudioContextClass = window.AudioContext || window.webkitAudioContext;
@@ -316,12 +496,8 @@ function generateLottoSet(shouldPlaySound = true){
     revealElement(bonusBall, bonusDelay, shouldPlaySound, playBonusSound);
 }
 
-function toggleTheme(){
-    let isDark = document.body.classList.toggle("dark");
-    document.getElementById("themeButton").textContent = isDark ? "White" : "Black";
-}
-
 generateLottoSet(false);
+detectVisitorCountry();
 
 </script>
 
